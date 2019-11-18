@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.BatteryManager;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -92,7 +93,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
             @Override
             public void connected(BluetoothDevice device) {
-                String message = "Hello from "+ getLocalBluetoothName();
+                String message = "Hello from "+ getLocalBluetoothName() + " battery: "+ getBattery_percentage();
                 try {
                     a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
                 } catch (IOException e) {
@@ -108,6 +109,19 @@ public class BluetoothActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         createView();
         setListeners();
+    }
+
+
+    String getBattery_percentage()
+    {
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = getApplicationContext().registerReceiver(null, ifilter);
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+        float batteryPct = level / (float)scale;
+        float p = batteryPct * 100;
+
+        return String.valueOf(Math.round(p));
     }
 
     // Method to remove elements from a set in java
@@ -144,6 +158,9 @@ public class BluetoothActivity extends AppCompatActivity {
         peersAdapter.notifyDataSetChanged();
         btnAnnounce = (Button) findViewById(R.id.btnBtAnnounce);
         btnDiscover = (Button) findViewById(R.id.btnBtDiscover);
+        a.btAnnounce();
+        a.btDiscover();
+
     }
 
     private void setListeners() {
