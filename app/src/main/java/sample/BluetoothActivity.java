@@ -1,6 +1,7 @@
 package sample;
 
 import android.Manifest;
+import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -21,10 +22,14 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.util.Iterator;
+
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import sintulabs.ayanda.R;
 import sintulabs.p2p.Ayanda;
@@ -72,7 +77,9 @@ public class BluetoothActivity extends AppCompatActivity {
             @Override
             public void actionFound(Intent intent) {
                 peersAdapter.clear();
-                peersAdapter.addAll(a.btGetDeviceNamesDiscovered());
+                Set<String> tt = a.btGetDeviceNamesDiscovered();
+                removenongps(tt);
+                peersAdapter.addAll(tt);
                 devices = a.btGetDevices();
             }
 
@@ -85,7 +92,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
             @Override
             public void connected(BluetoothDevice device) {
-                String message = "Hello World";
+                String message = "Hello from "+ getLocalBluetoothName();
                 try {
                     a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
                 } catch (IOException e) {
@@ -103,27 +110,36 @@ public class BluetoothActivity extends AppCompatActivity {
         setListeners();
     }
 
-    private ArrayList<String> filters(ArrayList<String> resulting) {
+    // Method to remove elements from a set in java
+    public static void removenongps(Set<String> ints)
+    {
 
-        String regex = "GPS+";
-        // This regex also works
-        //String regex = "\\d+";
+        Iterator<String> it = ints.iterator();
 
-        ArrayList<String> abc = new ArrayList<String>();
-
-        for(int i = 0; i < resulting.size(); i++) {
-            if(resulting.get(i).matches(regex)) {
-                abc.add(resulting.get(i));
+        while (it.hasNext()) {
+            if (!it.next().contains("GPS")) {	// remove even elements
+                it.remove();
             }
         }
-        return abc;
+    }
+
+    public String getLocalBluetoothName(){
+        BluetoothAdapter mBluetoothAdapter = null;
+        if(mBluetoothAdapter == null){
+            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        }
+        String name = mBluetoothAdapter.getName();
+        if(name == null){
+            System.out.println("Name is null!");
+            name = mBluetoothAdapter.getAddress();
+        }
+        return name;
     }
 
 
     private void createView() {
         lvBtDeviceNames = (ListView) findViewById(R.id.lvBtDeviceNames);
         peersAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, peerNames);
-        peerNames = filters((ArrayList<String>) peerNames);
         lvBtDeviceNames.setAdapter(peersAdapter);
         peersAdapter.notifyDataSetChanged();
         btnAnnounce = (Button) findViewById(R.id.btnBtAnnounce);
