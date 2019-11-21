@@ -51,6 +51,9 @@ public class BluetoothActivity extends AppCompatActivity {
     private HashMap<String, BluetoothDevice> devices = new HashMap<>();
 
     private Ayanda a;
+
+    private Coordinator c;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -109,6 +112,9 @@ public class BluetoothActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         createView();
         setListeners();
+
+        c = new Coordinator(BluetoothActivity.this);
+        c.run();
     }
 
 
