@@ -55,11 +55,16 @@ public class BluetoothActivity extends AppCompatActivity {
 
     private Coordinator c;
 
+    public void sendtoall(View view) {
 
-    void sendToAll() {
+        Toast.makeText(BluetoothActivity.this, devices.toString(), Toast.LENGTH_LONG)
+                .show();
 
         for (Map.Entry mapElement : devices.entrySet()) {
             String key = (String)mapElement.getKey();
+
+            Toast.makeText(BluetoothActivity.this, "Inside sendall, sending to: "+key, Toast.LENGTH_LONG)
+                    .show();
 
             BluetoothDevice device = (BluetoothDevice)mapElement.getValue();
 
@@ -70,7 +75,6 @@ public class BluetoothActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         }
-
 
     }
 
@@ -134,11 +138,12 @@ public class BluetoothActivity extends AppCompatActivity {
         createView();
         setListeners();
 
-        c = new Coordinator(BluetoothActivity.this);
-        c.run();
+//        c = new Coordinator(BluetoothActivity.this);
+//        c.run();
 
 
-        sendToAll();
+//        sendToAll();
+        a.btDiscoverandannounce();
     }
 
 
@@ -188,8 +193,8 @@ public class BluetoothActivity extends AppCompatActivity {
         peersAdapter.notifyDataSetChanged();
         btnAnnounce = (Button) findViewById(R.id.btnBtAnnounce);
         btnDiscover = (Button) findViewById(R.id.btnBtDiscover);
-        a.btAnnounce();
-        a.btDiscover();
+//        a.btAnnounce();
+//        a.btDiscover();
 
     }
 
@@ -257,5 +262,7 @@ public class BluetoothActivity extends AppCompatActivity {
         super.onPause();
         a.btUnregisterReceivers();
     }
+
+
 
 }

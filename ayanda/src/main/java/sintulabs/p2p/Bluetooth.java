@@ -94,9 +94,9 @@ public class Bluetooth extends P2P {
     public void announce() {
         if (isSupported()) {
             enable();
-            Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
-            context.startActivity(discoverableIntent);
+//            Intent discoverableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+//            discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300);
+//            context.startActivity(discoverableIntent);
             new ServerThread(true).start();
         }
     }
@@ -519,6 +519,7 @@ public class Bluetooth extends P2P {
         @Override
         public void run() {
             while(connectionExists(socket.getRemoteDevice())) {
+//            while(true) {
                 try {
                     read(buffer);
                 } catch (IOException e) {

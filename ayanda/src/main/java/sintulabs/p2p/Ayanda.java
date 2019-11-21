@@ -54,6 +54,11 @@ public class Ayanda {
         bt.discover();
     }
 
+    public void btDiscoverandannounce() {
+        bt.discover();
+        bt.announce();
+    }
+
     /**
      * Connects to a discovered bluetooth device. Role: Client
      * @param device Bluetooth Device
