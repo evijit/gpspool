@@ -9,11 +9,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,6 +26,7 @@ import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.util.HashSet;
 import java.util.Iterator;
 
 
@@ -53,6 +57,8 @@ public class BluetoothActivity extends AppCompatActivity {
 
     Ayanda a;
 
+    HashSet<String> connecteddevices = new HashSet<>();
+
     private Coordinator c;
 
     public void sendtoall(View view) {
@@ -61,8 +67,9 @@ public class BluetoothActivity extends AppCompatActivity {
             String key = (String)mapElement.getKey();
             if (key.contains("GPS")) {
 
-                Toast.makeText(BluetoothActivity.this, "Inside sendall, sending to: " + key, Toast.LENGTH_LONG)
-                        .show();
+//                Toast.makeText(BluetoothActivity.this, "Inside sendall, sending to: " + key, Toast.LENGTH_LONG)
+//                        .show();
+                Log.w("Debug", "Inside sendall, sending to: " + key);
 
                 BluetoothDevice device = (BluetoothDevice) mapElement.getValue();
 
@@ -116,6 +123,11 @@ public class BluetoothActivity extends AppCompatActivity {
                 String readMessage = new String(bytes, 0, length);
                 Toast.makeText(BluetoothActivity.this, readMessage, Toast.LENGTH_LONG)
                         .show();
+
+                String dname = readMessage.substring(readMessage.length() - 9);
+                connecteddevices.add(dname);
+
+                Log.w("Debug",readMessage);
             }
 
             @Override
@@ -142,6 +154,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
 
 //        sendToAll();
+        a.btAnnounce();
     }
 
 
@@ -266,11 +279,18 @@ public class BluetoothActivity extends AppCompatActivity {
         a.btDiscoverandannounce();
 
         for (Map.Entry mapElement : devices.entrySet()) {
-            String key = (String)mapElement.getKey();
+            String key = (String) mapElement.getKey();
             if (key.contains("GPS")) {
+
                 BluetoothDevice device = (BluetoothDevice) mapElement.getValue();
                 a.btConnect(device); // maybe a class for a device that's connected
             }
         }
+
+
+
+
     }
+
+
 }
