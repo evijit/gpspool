@@ -25,16 +25,21 @@ public class Worker extends Thread{
 
     }
 
-
+    public void start_task(){
+        while(n_signal > 0) {
+            Utility.sleep(5000);
+            cast_GPS();
+            n_signal -= 1;
+        }
+    }
 
     @Override
     public void run() {
         //Toast.makeText(this.context,"RUN !!!" , Toast.LENGTH_LONG).show();
         Log.w("Worker", "RUN !!!");
         while(true) {
-            while(n_signal > 0) {
-                Utility.sleep(5000);
-                cast_GPS();
+            if(n_signal > 0){
+                start_task();
             }
             Utility.sleep(5000);
         }
