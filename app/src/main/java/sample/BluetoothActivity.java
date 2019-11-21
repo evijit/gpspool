@@ -57,22 +57,21 @@ public class BluetoothActivity extends AppCompatActivity {
 
     public void sendtoall(View view) {
 
-        Toast.makeText(BluetoothActivity.this, devices.toString(), Toast.LENGTH_LONG)
-                .show();
-
         for (Map.Entry mapElement : devices.entrySet()) {
             String key = (String)mapElement.getKey();
+            if (key.contains("GPS")) {
 
-            Toast.makeText(BluetoothActivity.this, "Inside sendall, sending to: "+key, Toast.LENGTH_LONG)
-                    .show();
+                Toast.makeText(BluetoothActivity.this, "Inside sendall, sending to: " + key, Toast.LENGTH_LONG)
+                        .show();
 
-            BluetoothDevice device = (BluetoothDevice)mapElement.getValue();
+                BluetoothDevice device = (BluetoothDevice) mapElement.getValue();
 
-            String message = "Hello from "+ getLocalBluetoothName() + " to "+ key+ " battery: "+ getBattery_percentage();
-            try {
-                a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
-            } catch (IOException e) {
-                e.printStackTrace();
+                String message = "Hello from " + getLocalBluetoothName() + " to " + key + " battery: " + getBattery_percentage();
+                try {
+                    a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -121,7 +120,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
             @Override
             public void connected(BluetoothDevice device) {
-                String message = "Hello from "+ getLocalBluetoothName() + " battery: "+ getBattery_percentage();
+                String message = "Connection established with "+ getLocalBluetoothName() ;
                 try {
                     a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
                 } catch (IOException e) {
@@ -143,7 +142,6 @@ public class BluetoothActivity extends AppCompatActivity {
 
 
 //        sendToAll();
-        a.btDiscoverandannounce();
     }
 
 
@@ -264,5 +262,15 @@ public class BluetoothActivity extends AppCompatActivity {
     }
 
 
+    public void start(View view) {
+        a.btDiscoverandannounce();
 
+        for (Map.Entry mapElement : devices.entrySet()) {
+            String key = (String)mapElement.getKey();
+            if (key.contains("GPS")) {
+                BluetoothDevice device = (BluetoothDevice) mapElement.getValue();
+                a.btConnect(device); // maybe a class for a device that's connected
+            }
+        }
+    }
 }
