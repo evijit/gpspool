@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import sintulabs.ayanda.R;
@@ -50,9 +51,28 @@ public class BluetoothActivity extends AppCompatActivity {
     private List peerNames = new ArrayList();
     private HashMap<String, BluetoothDevice> devices = new HashMap<>();
 
-    private Ayanda a;
+    Ayanda a;
 
     private Coordinator c;
+
+
+    void sendToAll() {
+
+        for (Map.Entry mapElement : devices.entrySet()) {
+            String key = (String)mapElement.getKey();
+
+            BluetoothDevice device = (BluetoothDevice)mapElement.getValue();
+
+            String message = "Hello from "+ getLocalBluetoothName() + " to "+ key+ " battery: "+ getBattery_percentage();
+            try {
+                a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+
+    }
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -89,6 +109,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
             @Override
             public void dataRead(byte[] bytes, int length) {
+                // This is the listening method
                 String readMessage = new String(bytes, 0, length);
                 Toast.makeText(BluetoothActivity.this, readMessage, Toast.LENGTH_LONG)
                         .show();
@@ -115,6 +136,9 @@ public class BluetoothActivity extends AppCompatActivity {
 
         c = new Coordinator(BluetoothActivity.this);
         c.run();
+
+
+        sendToAll();
     }
 
 
