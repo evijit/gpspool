@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,11 +56,42 @@ public class BluetoothActivity extends AppCompatActivity {
     private List peerNames = new ArrayList();
     private HashMap<String, BluetoothDevice> devices = new HashMap<>();
 
+    HashMap<String,Float> battery_level;
+
+    String transfer_mess="";
+
+    boolean is_leader = false;
+
     Ayanda a;
 
     HashSet<String> connecteddevices = new HashSet<>();
 
     private Coordinator c;
+
+
+    BluetoothDevice getDeviceByName(String name){
+        for (Map.Entry mapElement : devices.entrySet()) {
+            String key = (String)mapElement.getKey();
+            if (key.contains(name)) {
+                return (BluetoothDevice)mapElement.getValue();
+            }
+        }
+        return null;
+    }
+
+    public List<String> parse_transfer_mess(){
+        String[] tokens = this.transfer_mess.split("-");
+        List<String> ret = new LinkedList<>();
+        if(tokens[1].equals("Done")){
+            return null;
+        }
+        else{
+            for(int i = 1; i < tokens.length;++i){
+                ret.add(tokens[i]);
+            }
+        }
+        return ret;
+    }
 
     public void sendtoall(View view) {
 
@@ -73,7 +105,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
                 BluetoothDevice device = (BluetoothDevice) mapElement.getValue();
 
-                String message = "Hello from " + getLocalBluetoothName() + " to " + key + " battery: " + getBattery_percentage();
+                String message = "Leader-" + getLocalBluetoothName();
                 try {
                     a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
                 } catch (IOException e) {
@@ -82,6 +114,26 @@ public class BluetoothActivity extends AppCompatActivity {
             }
         }
 
+    }
+
+    public void updateUI(){
+        this.peersAdapter.clear();
+        Set<String> tt = a.btGetDeviceNamesDiscovered();
+        removenongps(tt);
+        this.peersAdapter.addAll(tt);
+    }
+
+    public String create_transfer_mess(){
+        List<String> ret =parse_transfer_mess();
+        String mess = "Transfer";
+        if(ret.size() == 1){
+            mess =  "Transfer-GPSPool_0-GPSPool_3-GPSPool_4";
+        }else{
+            for(int i =1; i < ret.size();++i) {
+                mess += "-"+ret.get(i);
+            }
+        }
+        return mess;
     }
 
     @Override
@@ -110,29 +162,82 @@ public class BluetoothActivity extends AppCompatActivity {
 
             @Override
             public void actionFound(Intent intent) {
-                peersAdapter.clear();
-                Set<String> tt = a.btGetDeviceNamesDiscovered();
-                removenongps(tt);
-                peersAdapter.addAll(tt);
+                BluetoothActivity.this.updateUI();
                 devices = a.btGetDevices();
             }
 
             @Override
             public void dataRead(byte[] bytes, int length) {
                 // This is the listening method
-                String readMessage = new String(bytes, 0, length);
-                Toast.makeText(BluetoothActivity.this, readMessage, Toast.LENGTH_LONG)
+                String mess = new String(bytes, 0, length);
+
+                Toast.makeText(BluetoothActivity.this, mess, Toast.LENGTH_LONG)
                         .show();
+                //String dname = readMessage.substring(readMessage.length() - 9);
+                //connecteddevices.add(dname);
 
-                String dname = readMessage.substring(readMessage.length() - 9);
-                connecteddevices.add(dname);
+                a.btDiscover();
+                Utility.sleep(500);
+                a.btAnnounce();
+                Utility.sleep(500);
 
-                Log.w("Debug",readMessage);
+                String[] tokens = mess.split("-");
+                String mess_type = tokens[0];
+
+                if(mess_type.equals("Leader")){
+                    String leader = tokens[1];
+                    BluetoothDevice device = getDeviceByName(leader);
+
+                    String ack_mess = "Ack-"+getLocalBluetoothName()+"-"+getBattery_percentage();
+
+                    try {
+                        a.btSendData(device, ack_mess.getBytes());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    Toast.makeText(BluetoothActivity.this, "New leader :"+leader, Toast.LENGTH_LONG)
+                            .show();
+                }
+                else if (mess_type.equals("Ack")){
+                    String device_id = tokens[1];
+                    Float battery = Float.valueOf(tokens[2]);
+                    battery_level.put(device_id,battery);
+                    if(is_leader==false) {
+                        is_leader = true;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Utility.sleep(10000);
+                                //castMess("Leader-" + getLocalBluetoothName());
+                                for (int i = 0; i < 5; ++i) {
+                                    castMess("GPS-0.0");
+                                    Utility.sleep(5000);
+                                }
+
+                                BluetoothActivity.this.transfer_mess = BluetoothActivity.this.create_transfer_mess();
+
+                                castMess(BluetoothActivity.this.transfer_mess);
+                            }
+                        });
+                    }
+                }
+                else if (mess_type.equals("Transfer")){
+                    BluetoothActivity.this.transfer_mess = mess;
+                    Utility.sleep(1000);
+                    is_leader = false;
+                    List<String> ret = parse_transfer_mess();
+                    if(ret.get(0).equals(getLocalBluetoothName())){
+                        selfElect();
+                    }
+
+                }
+                Log.w("Debug",mess_type);
             }
 
             @Override
             public void connected(BluetoothDevice device) {
-                String message = "Connection established with "+ getLocalBluetoothName() ;
+                String message = "Leader-" + getLocalBluetoothName();
                 try {
                     a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
                 } catch (IOException e) {
@@ -146,14 +251,9 @@ public class BluetoothActivity extends AppCompatActivity {
         setContentView(R.layout.bluetooth_activity);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        battery_level =  new HashMap<>();
         createView();
         setListeners();
-
-//        c = new Coordinator(BluetoothActivity.this);
-//        c.run();
-
-
-//        sendToAll();
         a.btAnnounce();
     }
 
@@ -274,8 +374,29 @@ public class BluetoothActivity extends AppCompatActivity {
         a.btUnregisterReceivers();
     }
 
+    public void castMess(String mess) {
 
-    public void start(View view) {
+        for (Map.Entry mapElement : devices.entrySet()) {
+            String key = (String)mapElement.getKey();
+            if (key.contains("GPS")) {
+
+//                Toast.makeText(BluetoothActivity.this, "Inside sendall, sending to: " + key, Toast.LENGTH_LONG)
+//                        .show();
+                Log.w("Debug", "Inside sendall, sending to: " + key);
+
+                BluetoothDevice device = (BluetoothDevice) mapElement.getValue();
+
+                try {
+                    a.btSendData(device, mess.getBytes()); // maybe a class for a device that's connected
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+
+    public void selfElect() {
         a.btDiscoverandannounce();
 
         for (Map.Entry mapElement : devices.entrySet()) {
@@ -286,10 +407,29 @@ public class BluetoothActivity extends AppCompatActivity {
                 a.btConnect(device); // maybe a class for a device that's connected
             }
         }
+    }
+
+    public void start(View view) {
+        /*
+        a.btDiscoverandannounce();
+
+        for (Map.Entry mapElement : devices.entrySet()) {
+            String key = (String) mapElement.getKey();
+            if (key.contains("GPS")) {
+
+                BluetoothDevice device = (BluetoothDevice) mapElement.getValue();
+                a.btConnect(device); // maybe a class for a device that's connected
+            }
+        }
+         */
+        //a.btDiscoverandannounce();
+        //c = new Coordinator(this.devices,"Transfer-Done",a);
+        //c.start();
 
 
-
-
+        selfElect();
+        transfer_mess = "Transfer-GPSPool_0-GPSPool_3-GPSPool_4";
+        Log.w("Debug","exit start");
     }
 
 

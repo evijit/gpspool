@@ -1,7 +1,10 @@
 package sample;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.util.Log;
+import android.view.View;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -9,9 +12,13 @@ import java.util.Queue;
 import java.util.*;
 
 import sample.Utility;
+import sintulabs.p2p.Ayanda;
 
 
 public class Coordinator extends Thread{
+    HashMap<String, BluetoothDevice> devices;
+    Ayanda a;
+    String transfer_mess;
     Queue<Integer> list_order;
     Queue<Integer> list_n_signal;
 
@@ -70,28 +77,81 @@ public class Coordinator extends Thread{
         Log.w("Coordinator", notification);
     }
 
-    public Coordinator(Context context){
-        this.context = context;
+    public Coordinator(HashMap<String, BluetoothDevice> devices, String transfer_mess, Ayanda a){
+        this.devices = devices;
+        this.transfer_mess = transfer_mess;
+        this.a = a;
         this.list_order = new LinkedList<Integer>();
         this.list_n_signal = new LinkedList<Integer>();
+    }
 
+    BluetoothDevice getDeviceByName(String name){
+        for (Map.Entry mapElement : devices.entrySet()) {
+            String key = (String)mapElement.getKey();
+            if (key.contains(name)) {
+                return (BluetoothDevice)mapElement.getValue();
+            }
+        }
+        return null;
+    }
 
+    public String getLocalBluetoothName(){
+        BluetoothAdapter mBluetoothAdapter = null;
+        if(mBluetoothAdapter == null){
+            mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        }
+        String name = mBluetoothAdapter.getName();
+        if(name == null){
+            System.out.println("Name is null!");
+            name = mBluetoothAdapter.getAddress();
+        }
+        return name;
+    }
+
+    public void castMess(String mess) {
+
+        for (Map.Entry mapElement : devices.entrySet()) {
+            String key = (String)mapElement.getKey();
+            if (key.contains("GPS")) {
+
+//                Toast.makeText(BluetoothActivity.this, "Inside sendall, sending to: " + key, Toast.LENGTH_LONG)
+//                        .show();
+                Log.w("Debug", "Inside sendall, sending to: " + key);
+
+                BluetoothDevice device = (BluetoothDevice) mapElement.getValue();
+
+                try {
+                    a.btSendData(device, mess.getBytes()); // maybe a class for a device that's connected
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+    }
+
+    public void selfElect() {
+        a.btDiscoverandannounce();
+
+        for (Map.Entry mapElement : devices.entrySet()) {
+            String key = (String) mapElement.getKey();
+            if (key.contains("GPS")) {
+
+                BluetoothDevice device = (BluetoothDevice) mapElement.getValue();
+                a.btConnect(device); // maybe a class for a device that's connected
+            }
+        }
     }
 
     @Override
     public void run() {
         //Toast.makeText(this.context,"RUN !!!" , Toast.LENGTH_LONG).show();
-        Log.w("Coordinator", "RUN !!!");
-        while(true) {
-            if(is_task_done){
-                send_task();
-                is_task_done = false;
-
-                Utility.sleep(5000);
-
-                is_task_done = true;
-
-            }
+        selfElect();
+        Utility.sleep(5000);
+        for(int i = 0; i < 5; ++i){
+            castMess("GPS-0.0");
+            Utility.sleep(1000);
         }
+        castMess("Transfer-Done");
     }
 }
