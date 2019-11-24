@@ -60,7 +60,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
     String transfer_mess="";
 
-    String behavior = "Transfer-GPSPool_0-GPSPool_3-GPSPool_4";
+    String behavior = "Transfer-GPSPool_0-GPSPool_4";
     boolean is_leader = false;
     Integer round = 0;
     Ayanda a;
@@ -204,21 +204,25 @@ public class BluetoothActivity extends AppCompatActivity {
                     battery_level.put(device_id,battery);
                     if(is_leader==false) {
                         is_leader = true;
-                        runOnUiThread(new Runnable() {
-                            @Override
+                        new Thread() {          //this would make sure it will not block the dataRead thread
                             public void run() {
-                                Utility.sleep(10000);
-                                //castMess("Leader-" + getLocalBluetoothName());
-                                for (int i = 0; i < 5; ++i) {
-                                    castMess("GPS-0.0-n_message:"+String.valueOf(i)+"-n_round:"+String.valueOf(round));
-                                    Utility.sleep(5000);
-                                }
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Utility.sleep(10000);
+                                        //castMess("Leader-" + getLocalBluetoothName());
+                                        for (int i = 0; i < 5; ++i) {
+                                            castMess("GPS-0.0-n_message:" + String.valueOf(i) + "-n_round:" + String.valueOf(round));
+                                            Utility.sleep(5000);
+                                        }
 
-                                BluetoothActivity.this.transfer_mess = BluetoothActivity.this.create_transfer_mess();
+                                        BluetoothActivity.this.transfer_mess = BluetoothActivity.this.create_transfer_mess();
 
-                                castMess(BluetoothActivity.this.transfer_mess);
+                                        castMess(BluetoothActivity.this.transfer_mess);
+                                    }
+                                });
                             }
-                        });
+                        }.start();
                     }
                 }
                 else if (mess_type.equals("Transfer")){
@@ -255,7 +259,8 @@ public class BluetoothActivity extends AppCompatActivity {
         battery_level =  new HashMap<>();
         createView();
         setListeners();
-        a.btAnnounce();
+        //a.btAnnounce();
+        a.btDiscoverandannounce();
     }
 
 
