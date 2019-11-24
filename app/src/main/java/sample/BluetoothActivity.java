@@ -60,8 +60,9 @@ public class BluetoothActivity extends AppCompatActivity {
 
     String transfer_mess="";
 
+    String behavior = "Transfer-GPSPool_0-GPSPool_3-GPSPool_4";
     boolean is_leader = false;
-
+    Integer round = 0;
     Ayanda a;
 
     HashSet<String> connecteddevices = new HashSet<>();
@@ -127,7 +128,7 @@ public class BluetoothActivity extends AppCompatActivity {
         List<String> ret =parse_transfer_mess();
         String mess = "Transfer";
         if(ret.size() == 1){
-            mess =  "Transfer-GPSPool_0-GPSPool_3-GPSPool_4";
+            mess =  behavior;//"Transfer-GPSPool_0-GPSPool_4";
         }else{
             for(int i =1; i < ret.size();++i) {
                 mess += "-"+ret.get(i);
@@ -176,15 +177,13 @@ public class BluetoothActivity extends AppCompatActivity {
                 //String dname = readMessage.substring(readMessage.length() - 9);
                 //connecteddevices.add(dname);
 
-                a.btDiscover();
-                Utility.sleep(500);
-                a.btAnnounce();
-                Utility.sleep(500);
-
                 String[] tokens = mess.split("-");
                 String mess_type = tokens[0];
 
                 if(mess_type.equals("Leader")){
+                    round += 1;
+                    a.btDiscoverandannounce();
+
                     String leader = tokens[1];
                     BluetoothDevice device = getDeviceByName(leader);
 
@@ -211,7 +210,7 @@ public class BluetoothActivity extends AppCompatActivity {
                                 Utility.sleep(10000);
                                 //castMess("Leader-" + getLocalBluetoothName());
                                 for (int i = 0; i < 5; ++i) {
-                                    castMess("GPS-0.0");
+                                    castMess("GPS-0.0-n_message:"+String.valueOf(i)+"-n_round:"+String.valueOf(round));
                                     Utility.sleep(5000);
                                 }
 
@@ -223,6 +222,8 @@ public class BluetoothActivity extends AppCompatActivity {
                     }
                 }
                 else if (mess_type.equals("Transfer")){
+                    a.btDiscoverandannounce();
+
                     BluetoothActivity.this.transfer_mess = mess;
                     Utility.sleep(1000);
                     is_leader = false;
@@ -428,7 +429,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
 
         selfElect();
-        transfer_mess = "Transfer-GPSPool_0-GPSPool_3-GPSPool_4";
+        transfer_mess = behavior;//"Transfer-GPSPool_0-GPSPool_4";
         Log.w("Debug","exit start");
     }
 
