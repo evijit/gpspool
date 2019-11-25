@@ -60,7 +60,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
     String transfer_mess="";
 
-    String behavior = "Transfer-GPSPool_0-GPSPool_4";
+    String behavior = "Transfer-GPSPool_0-GPSPool_3-GPSPool_4";
     boolean is_leader = false;
     Float round = 20f;
     Ayanda a;
