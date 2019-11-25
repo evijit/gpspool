@@ -62,7 +62,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
     String behavior = "Transfer-GPSPool_0-GPSPool_4";
     boolean is_leader = false;
-    Integer round = 0;
+    Float round = 20f;
     Ayanda a;
 
     HashSet<String> connecteddevices = new HashSet<>();
@@ -92,6 +92,15 @@ public class BluetoothActivity extends AppCompatActivity {
             }
         }
         return ret;
+    }
+
+    public Integer compute_n_signal(){
+        Float n_total_battery = 0.0f;
+        for (Map.Entry<String, Float> entry : this.battery_level.entrySet()) {
+            n_total_battery += entry.getValue();
+        }
+        Float battery = Float.valueOf(getBattery_percentage());
+        return Math.round(round*n_total_battery/battery);
     }
 
     public void sendtoall(View view) {
@@ -210,6 +219,7 @@ public class BluetoothActivity extends AppCompatActivity {
                                     @Override
                                     public void run() {
                                         Utility.sleep(10000);
+                                        Integer n_signal = BluetoothActivity.this.compute_n_signal();
                                         //castMess("Leader-" + getLocalBluetoothName());
                                         for (int i = 0; i < 5; ++i) {
                                             castMess("GPS-0.0-n_message:" + String.valueOf(i) + "-n_round:" + String.valueOf(round));
