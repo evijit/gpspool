@@ -264,6 +264,9 @@ public class BluetoothActivity extends AppCompatActivity {
 
                                 Utility.sleep(sleep_transfer);
                                 Integer n_signal = BluetoothActivity.this.compute_n_signal();
+                                if(n_signal == 0){
+                                    n_signal = 1;
+                                }
                                 //castMess("Leader-" + getLocalBluetoothName());
 
 
@@ -282,9 +285,9 @@ public class BluetoothActivity extends AppCompatActivity {
                                     lon = loc.getLongitude();
                                 }catch (Exception e){
                                 }
-                                for (int i = 0; i < 5; ++i) {
+                                for (int i = 0; i < n_signal; ++i) {
                                     castMess("GPS-" + lat + "|" + lon + "-n_message:" + i + "-n_round:" + round);
-                                    Utility.sleep(5000);
+                                    Utility.sleep(sleep_GPS);
 
                                 }
 
