@@ -42,11 +42,19 @@ import sintulabs.p2p.Ayanda;
 import sintulabs.p2p.Bluetooth;
 import sintulabs.p2p.IBluetooth;
 
+import android.support.v4.app.FragmentActivity;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 /**
  * Created by sabzo on 1/14/18.
  */
 
-public class BluetoothActivity extends AppCompatActivity {
+public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCallback{
     private Button btnAnnounce;
     private Button btnDiscover;
     private Bluetooth bt;
@@ -61,7 +69,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
     Integer clock = -1;
 
-    //String behavior = "Transfer-GPSPool_0-GPSPool_1-GPSPool_3";
+    //String behavior = "Transfer~GPSPool_0~GPSPool_1~GPSPool_3";
 
     boolean is_leader = false;
     boolean is_timeout = false;
@@ -77,6 +85,7 @@ public class BluetoothActivity extends AppCompatActivity {
     HashSet<String> connecteddevices = new HashSet<>();
 
     private Coordinator c;
+    private GoogleMap mMap;
 
 
     BluetoothDevice getDeviceByName(String name) {
@@ -90,7 +99,7 @@ public class BluetoothActivity extends AppCompatActivity {
     }
 
     public List<String> parse_transfer_mess() {
-        String[] tokens = this.transfer_mess.split("-");
+        String[] tokens = this.transfer_mess.split("~");
         List<String> ret = new LinkedList<>();
         if (tokens[1].equals("Done")) {
             return null;
@@ -124,7 +133,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
                 BluetoothDevice device = (BluetoothDevice) mapElement.getValue();
 
-                String message = "Leader-" + getLocalBluetoothName();
+                String message = "Leader~" + getLocalBluetoothName();
                 try {
                     a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
                 } catch (IOException e) {
@@ -147,11 +156,11 @@ public class BluetoothActivity extends AppCompatActivity {
         String mess = "Transfer";
         if(ret.size() == 1){
             for (Map.Entry<String, Float> entry : this.battery_level.entrySet()) {
-                mess += "-"+entry.getKey();
+                mess += "~"+entry.getKey();
             }
         }else{
             for(int i =1; i < ret.size();++i) {
-                mess += "-"+ret.get(i);
+                mess += "~"+ret.get(i);
             }
         }
         return mess;
@@ -206,7 +215,7 @@ public class BluetoothActivity extends AppCompatActivity {
                 //String dname = readMessage.substring(readMessage.length() - 9);
                 //connecteddevices.add(dname);
 
-                String[] tokens = mess.split("-");
+                String[] tokens = mess.split("~");
                 String mess_type = tokens[0];
 
                 /*
@@ -243,7 +252,7 @@ public class BluetoothActivity extends AppCompatActivity {
                     String leader = tokens[1];
                     BluetoothDevice device = getDeviceByName(leader);
 
-                    String ack_mess = "Ack-" + getLocalBluetoothName() + "-" + getBattery_percentage();
+                    String ack_mess = "Ack~" + getLocalBluetoothName() + "~" + getBattery_percentage();
 
                     try {
                         a.btSendData(device, ack_mess.getBytes());
@@ -267,7 +276,7 @@ public class BluetoothActivity extends AppCompatActivity {
                                 if(n_signal == 0){
                                     n_signal = 1;
                                 }
-                                //castMess("Leader-" + getLocalBluetoothName());
+                                //castMess("Leader~" + getLocalBluetoothName());
 
 
 
@@ -278,6 +287,7 @@ public class BluetoothActivity extends AppCompatActivity {
                                 }
                                 Location loc = manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
+
                                 //Toast.makeText( getApplicationContext(),"My current location is: " + "Latitud =" +
                                 //        loc.getLatitude() + "Longitud = " + loc.getLongitude(),Toast.LENGTH_SHORT).show();
                                 try {
@@ -286,8 +296,8 @@ public class BluetoothActivity extends AppCompatActivity {
                                 }catch (Exception e){
                                 }
                                 for (int i = 0; i < n_signal; ++i) {
-                                    castMess("GPS-" + lat + "|" + lon + "-n_message:" + i + "-n_round:" + round);
-                                    Utility.sleep(sleep_GPS);
+                                    castMess("GPS~" + lat + "|" + lon + "~n_message:" + i + "~n_round:" + round);
+                                    Utility.sleep(5000);
 
                                 }
 
@@ -316,12 +326,24 @@ public class BluetoothActivity extends AppCompatActivity {
                     }
 
                 }
+                else if (mess_type.equals(("GPS"))){
+
+
+                    String[] toks = mess.split("~");
+                    String[] ll = toks[1].split("|");
+                    Double lt = Double.valueOf(ll[0]);
+                    Double ln = Double.valueOf(ll[1]);
+                    mMap.clear();
+                    LatLng mkr = new LatLng(lt, ln);
+                    mMap.addMarker(new MarkerOptions().position(mkr).title("Received Location"));
+                    mMap.moveCamera(CameraUpdateFactory.newLatLng(mkr));
+                }
                 Log.w("Debug", mess_type);
             }
 
             @Override
             public void connected(BluetoothDevice device) {
-                String message = "Leader-" + getLocalBluetoothName();//"Hello";//
+                String message = "Leader~" + getLocalBluetoothName();//"Hello";//
                 try {
                     a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
                 } catch (IOException e) {
@@ -340,6 +362,8 @@ public class BluetoothActivity extends AppCompatActivity {
         setListeners();
         //a.btAnnounce();
         a.btDiscoverandannounce();
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
     }
 
@@ -495,7 +519,7 @@ public class BluetoothActivity extends AppCompatActivity {
                 a.btConnect(device); // maybe a class for a device that's connected
             }
         }
-        //castMess("Leader-"+getLocalBluetoothName());
+        //castMess("Leader~"+getLocalBluetoothName());
     }
 
     public void start(View view) {
@@ -512,14 +536,23 @@ public class BluetoothActivity extends AppCompatActivity {
         }
          */
         //a.btDiscoverandannounce();
-        //c = new Coordinator(this.devices,"Transfer-Done",a);
+        //c = new Coordinator(this.devices,"Transfer~Done",a);
         //c.start();
 
 
         selfElect();
-        transfer_mess = "Transfer-"+getLocalBluetoothName();//behavior;//"Transfer-GPSPool_0-GPSPool_4";
+        transfer_mess = "Transfer~"+getLocalBluetoothName();//behavior;//"Transfer~GPSPool_0~GPSPool_4";
         Log.w("Debug","exit start");
     }
 
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+
+        // Add a marker in Sydney, Australia, and move the camera.
+        LatLng sydney = new LatLng(-34, 151);
+        mMap.addMarker(new MarkerOptions().position(sydney).title("Starting marker"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    }
 }
