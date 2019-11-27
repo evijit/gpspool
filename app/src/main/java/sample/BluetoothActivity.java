@@ -195,6 +195,25 @@ public class BluetoothActivity extends AppCompatActivity {
                 String[] tokens = mess.split("-");
                 String mess_type = tokens[0];
 
+                if(clock == -1){
+                    Toast.makeText(BluetoothActivity.this, "Initialize time out!", Toast.LENGTH_LONG)
+                            .show();
+                    new Thread() {          //this would make sure it will not block the dataRead thread
+                        public void run() {
+
+                            Integer old_clock = BluetoothActivity.this.clock;
+                            Utility.sleep(10000);
+                            if ((BluetoothActivity.this.clock <= old_clock) & (old_clock > 0)) {
+
+                                BluetoothActivity.this.transfer_mess = BluetoothActivity.this.create_transfer_mess();
+
+                                castMess(BluetoothActivity.this.transfer_mess);
+
+                            }
+                        }
+                    }.start();
+                }
+
                 clock += 1;
 
                 if(mess_type.equals("Leader")){
@@ -279,30 +298,6 @@ public class BluetoothActivity extends AppCompatActivity {
         setListeners();
         //a.btAnnounce();
         a.btDiscoverandannounce();
-
-
-        new Thread() {          //this would make sure it will not block the dataRead thread
-            public void run() {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Integer old_clock = BluetoothActivity.this.clock;
-                        Utility.sleep(10000);
-
-                        if ((BluetoothActivity.this.clock <= old_clock) & (old_clock > 0)) {
-
-                            Toast.makeText(BluetoothActivity.this, "!!! Time-out !!!", Toast.LENGTH_LONG)
-                                    .show();
-
-                            BluetoothActivity.this.transfer_mess = BluetoothActivity.this.create_transfer_mess();
-
-                            castMess(BluetoothActivity.this.transfer_mess);
-                        }
-                    }
-                });
-            }
-        }.start();
-
     }
 
 
