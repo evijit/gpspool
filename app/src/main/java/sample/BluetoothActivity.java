@@ -73,8 +73,12 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
     boolean is_leader = false;
     boolean is_timeout = false;
+
     Integer sleep_transfer = 15000;
     Integer sleep_GPS = 8000;
+
+    Integer n_total = 0;
+
     Float round = 0f;
     Float n_signal_round = 5f;
     Ayanda a;
@@ -87,7 +91,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     private Coordinator c;
     private GoogleMap mMap;
 
-
+    float zoom_level = 14f;
     BluetoothDevice getDeviceByName(String name) {
         for (Map.Entry mapElement : devices.entrySet()) {
             String key = (String) mapElement.getKey();
@@ -270,7 +274,6 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                         is_leader = true;
                         new Thread() {          //this would make sure it will not block the dataRead thread
                             public void run() {
-
                                 Utility.sleep(sleep_transfer);
                                 Integer n_signal = BluetoothActivity.this.compute_n_signal();
                                 if(n_signal == 0){
@@ -288,16 +291,36 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                                 Location loc = manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
 
+
                                 //Toast.makeText( getApplicationContext(),"My current location is: " + "Latitud =" +
                                 //        loc.getLatitude() + "Longitud = " + loc.getLongitude(),Toast.LENGTH_SHORT).show();
                                 try {
                                     lat = loc.getLatitude();
                                     lon = loc.getLongitude();
+
                                 }catch (Exception e){
                                 }
+
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mMap.clear();
+                                        LatLng mkr = new LatLng(lat, lon);
+                                        mMap.addMarker(new MarkerOptions().position(mkr).title("Received Location"));
+                                        mMap.moveCamera(CameraUpdateFactory.newLatLng(mkr));
+                                        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mkr, zoom_level));
+
+                                        TextView tv_bat = (TextView) findViewById(R.id.txbat);
+                                        TextView tv_txcount = (TextView) findViewById(R.id.txcount);
+
+                                        tv_bat.setText(getBattery_percentage_MAA());
+                                        tv_txcount.setText(String.valueOf(n_total));
+                                    }
+                                });
                                 for (int i = 0; i < n_signal; ++i) {
-                                    castMess("GPS~" + lat + "|" + lon + "~n_message:" + i + "~n_round:" + round);
-                                    Utility.sleep(5000);
+                                    n_total+=1;
+                                    castMess("GPS~" + lat + "=" + lon + "~n_message:" + i + "~n_round:" + round);
+                                    Utility.sleep(sleep_GPS);
 
                                 }
 
@@ -327,16 +350,23 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                 }
                 else if (mess_type.equals(("GPS"))){
-
+                    n_total+=1;
 
                     String[] toks = mess.split("~");
-                    String[] ll = toks[1].split("|");
+                    String[] ll = toks[1].split("=");
                     Double lt = Double.valueOf(ll[0]);
                     Double ln = Double.valueOf(ll[1]);
                     mMap.clear();
                     LatLng mkr = new LatLng(lt, ln);
                     mMap.addMarker(new MarkerOptions().position(mkr).title("Received Location"));
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(mkr));
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mkr,zoom_level));
+
+                    TextView tv_bat = (TextView) findViewById(R.id.txbat);
+                    TextView tv_txcount = (TextView) findViewById(R.id.txcount);
+
+                    tv_bat.setText(getBattery_percentage_MAA());
+                    tv_txcount.setText(String.valueOf(n_total));
                 }
                 Log.w("Debug", mess_type);
             }
@@ -378,6 +408,38 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         float p = batteryPct * 100;
 
         return String.valueOf(Math.round(p));
+    }
+
+    String getBattery_percentage_MAA()
+    {
+        Object mPowerProfile_ = null;
+        double batteryCapacity = 0.0;
+        final String POWER_PROFILE_CLASS = "com.android.internal.os.PowerProfile";
+
+        try {
+            mPowerProfile_ = Class.forName(POWER_PROFILE_CLASS)
+                    .getConstructor(Context.class).newInstance(this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            batteryCapacity = (Double) Class
+                    .forName(POWER_PROFILE_CLASS)
+                    .getMethod("getAveragePower", java.lang.String.class)
+                    .invoke(mPowerProfile_, "battery.capacity");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+        Intent batteryStatus = getApplicationContext().registerReceiver(null, ifilter);
+        int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+        int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+        float batteryPct = level / (float)scale;
+        float p = batteryPct *(float)batteryCapacity;
+
+        return String.valueOf(p);
     }
 
     // Method to remove elements from a set in java
@@ -539,6 +601,10 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         //c = new Coordinator(this.devices,"Transfer~Done",a);
         //c.start();
 
+        TextView tv_log = (TextView) findViewById(R.id.logt);
+        tv_log.setMovementMethod(new ScrollingMovementMethod());
+
+        tv_log.setText("");
 
         selfElect();
         transfer_mess = "Transfer~"+getLocalBluetoothName();//behavior;//"Transfer~GPSPool_0~GPSPool_4";
@@ -554,5 +620,65 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Starting marker"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    }
+
+
+    public void constgps(View view) {
+        TextView tv_log = (TextView) findViewById(R.id.logt);
+        tv_log.setMovementMethod(new ScrollingMovementMethod());
+
+        tv_log.setText("");
+
+        new Thread() {          //this would make sure it will not block the dataRead thread
+            public void run() {
+                while (true) {
+
+                    LocationManager manager = (LocationManager) BluetoothActivity.this.getSystemService(Context.LOCATION_SERVICE);
+                    if (ActivityCompat.checkSelfPermission(BluetoothActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                            ActivityCompat.checkSelfPermission(BluetoothActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        return;
+                    }
+                    Location loc = manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+                    n_total += 1;
+                    //Toast.makeText( getApplicationContext(),"My current location is: " + "Latitud =" +
+                    //        loc.getLatitude() + "Longitud = " + loc.getLongitude(),Toast.LENGTH_SHORT).show();
+                    try {
+                        lat = loc.getLatitude();
+                        lon = loc.getLongitude();
+
+                    } catch (Exception e) {
+                    }
+
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+
+                            TextView tv_bat = (TextView) findViewById(R.id.txbat);
+                            TextView tv_txcount = (TextView) findViewById(R.id.txcount);
+
+                            tv_bat.setText(getBattery_percentage_MAA());
+                            tv_txcount.setText(String.valueOf(n_total));
+
+                            TextView tv_log = (TextView) findViewById(R.id.logt);
+                            tv_log.setMovementMethod(new ScrollingMovementMethod());
+
+                            String om = tv_log.getText().toString();;
+                            om = om + "\n GPS" ;
+                            tv_log.setText(om);
+
+                            mMap.clear();
+                            LatLng mkr = new LatLng(lat, lon);
+                            mMap.addMarker(new MarkerOptions().position(mkr).title("Received Location"));
+                            mMap.moveCamera(CameraUpdateFactory.newLatLng(mkr));
+                            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mkr, zoom_level));
+                        }
+                    });
+
+                    Utility.sleep(sleep_GPS);
+                }
+            }
+        }.start();
     }
 }
