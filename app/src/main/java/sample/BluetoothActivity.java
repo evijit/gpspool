@@ -80,7 +80,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     Integer n_total = 0;
 
     Float round = 0f;
-    Float n_signal_round = 5f;
+    Float n_signal_round = 10000f;
     Ayanda a;
 
     double lat = 0;
