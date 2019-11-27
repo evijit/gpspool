@@ -71,6 +71,9 @@ public class BluetoothActivity extends AppCompatActivity {
     Float n_signal_round = 5f;
     Ayanda a;
 
+    double lat = 0;
+    double lon = 0;
+
     HashSet<String> connecteddevices = new HashSet<>();
 
     private Coordinator c;
@@ -263,8 +266,7 @@ public class BluetoothActivity extends AppCompatActivity {
                                 Integer n_signal = BluetoothActivity.this.compute_n_signal();
                                 //castMess("Leader-" + getLocalBluetoothName());
 
-                                double lat = 0;
-                                double lon = 0;
+
 
                                 LocationManager manager = (LocationManager) BluetoothActivity.this.getSystemService(Context.LOCATION_SERVICE);
                                 if (ActivityCompat.checkSelfPermission(BluetoothActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
@@ -273,12 +275,13 @@ public class BluetoothActivity extends AppCompatActivity {
                                 }
                                 Location loc = manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
-                                Toast.makeText( getApplicationContext(),"My current location is: " + "Latitud =" +
-                                        loc.getLatitude() + "Longitud = " + loc.getLongitude(),Toast.LENGTH_SHORT).show();
-
-                                lat = loc.getLatitude();
-                                lon = loc.getLongitude();
-
+                                //Toast.makeText( getApplicationContext(),"My current location is: " + "Latitud =" +
+                                //        loc.getLatitude() + "Longitud = " + loc.getLongitude(),Toast.LENGTH_SHORT).show();
+                                try {
+                                    lat = loc.getLatitude();
+                                    lon = loc.getLongitude();
+                                }catch (Exception e){
+                                }
                                 for (int i = 0; i < 5; ++i) {
                                     castMess("GPS-" + lat + "|" + lon + "-n_message:" + i + "-n_round:" + round);
                                     Utility.sleep(5000);
