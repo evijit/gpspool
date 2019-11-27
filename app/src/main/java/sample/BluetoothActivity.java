@@ -65,8 +65,10 @@ public class BluetoothActivity extends AppCompatActivity {
     //String behavior = "Transfer-GPSPool_0-GPSPool_1-GPSPool_3";
     boolean is_leader = false;
     boolean is_timeout = false;
+    Integer sleep_transfer = 15000;
+    Integer sleep_GPS = 8000;
     Float round = 0f;
-    Float n_signal_round = 20f;
+    Float n_signal_round = 5f;
     Ayanda a;
 
     HashSet<String> connecteddevices = new HashSet<>();
@@ -195,6 +197,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
                 String[] tokens = mess.split("-");
                 String mess_type = tokens[0];
+
                 /*
                 if(is_timeout==false){
                     Toast.makeText(BluetoothActivity.this, "Initialize time out!", Toast.LENGTH_LONG)
@@ -203,7 +206,7 @@ public class BluetoothActivity extends AppCompatActivity {
                         public void run() {
                             while(true) {
                                 Integer old_clock = BluetoothActivity.this.clock;
-                                Utility.sleep(10000);
+                                Utility.sleep(sleep_transfer*2);
                                 if ((BluetoothActivity.this.clock <= old_clock) & (old_clock > 0)) {
 
                                     BluetoothActivity.this.transfer_mess = BluetoothActivity.this.create_transfer_mess();
@@ -217,6 +220,8 @@ public class BluetoothActivity extends AppCompatActivity {
                     }.start();
                     is_timeout = true;
                 }
+
+                
                  */
                 clock += 1;
 
@@ -247,12 +252,12 @@ public class BluetoothActivity extends AppCompatActivity {
                         new Thread() {          //this would make sure it will not block the dataRead thread
                             public void run() {
 
-                                Utility.sleep(10000);
+                                Utility.sleep(sleep_transfer);
                                 Integer n_signal = BluetoothActivity.this.compute_n_signal();
                                 //castMess("Leader-" + getLocalBluetoothName());
                                 for (int i = 0; i < n_signal; ++i) {
-                                    castMess("GPS-0.0-n_message:" + String.valueOf(i) + "-n_round:" + String.valueOf(round));
-                                    Utility.sleep(5000);
+                                    castMess("GPS-0.0-n_message:" + String.valueOf(i) + "-n_round:" + String.valueOf(round)+"-FROM:"+getLocalBluetoothName());
+                                    Utility.sleep(sleep_GPS);
                                 }
 
                                 BluetoothActivity.this.transfer_mess = BluetoothActivity.this.create_transfer_mess();
