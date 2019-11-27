@@ -60,6 +60,8 @@ public class BluetoothActivity extends AppCompatActivity {
 
     String transfer_mess="";
 
+    Integer clock = -1;
+
     //String behavior = "Transfer-GPSPool_0-GPSPool_1-GPSPool_3";
     boolean is_leader = false;
     Float round = 0f;
@@ -193,6 +195,8 @@ public class BluetoothActivity extends AppCompatActivity {
                 String[] tokens = mess.split("-");
                 String mess_type = tokens[0];
 
+                clock += 1;
+
                 if(mess_type.equals("Leader")){
                     round += 1;
                     a.btDiscoverandannounce();
@@ -256,7 +260,7 @@ public class BluetoothActivity extends AppCompatActivity {
 
             @Override
             public void connected(BluetoothDevice device) {
-                String message = "Leader-" + getLocalBluetoothName();
+                String message = "Leader-" + getLocalBluetoothName();//"Hello";//
                 try {
                     a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
                 } catch (IOException e) {
@@ -275,6 +279,30 @@ public class BluetoothActivity extends AppCompatActivity {
         setListeners();
         //a.btAnnounce();
         a.btDiscoverandannounce();
+
+
+        new Thread() {          //this would make sure it will not block the dataRead thread
+            public void run() {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Integer old_clock = BluetoothActivity.this.clock;
+                        Utility.sleep(10000);
+
+                        if ((BluetoothActivity.this.clock <= old_clock) & (old_clock > 0)) {
+
+                            Toast.makeText(BluetoothActivity.this, "!!! Time-out !!!", Toast.LENGTH_LONG)
+                                    .show();
+
+                            BluetoothActivity.this.transfer_mess = BluetoothActivity.this.create_transfer_mess();
+
+                            castMess(BluetoothActivity.this.transfer_mess);
+                        }
+                    }
+                });
+            }
+        }.start();
+
     }
 
 
@@ -427,6 +455,7 @@ public class BluetoothActivity extends AppCompatActivity {
                 a.btConnect(device); // maybe a class for a device that's connected
             }
         }
+        //castMess("Leader-"+getLocalBluetoothName());
     }
 
     public void start(View view) {
