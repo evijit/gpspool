@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/btn_bluetooth_announce"
-        android:visibility="visible"
+        android:visibility="gone"
         android:layout_alignParentLeft="true"
         />
 
@@ -22,7 +22,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/btn_bluetooth_discover"
-        android:visibility="visible"
+        android:visibility="gone"
         android:layout_alignParentRight="true"/>
 
     <LinearLayout
@@ -32,10 +32,20 @@
         android:layout_below="@+id/btnBtDiscover"
         android:layout_margin="20dp">
 
+        <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.5"
+            android:id="@+id/map"
+            tools:context=".BluetoothActivity"
+            android:name="com.google.android.gms.maps.SupportMapFragment" />
+
     <ListView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="0.5"
+        android:visibility="gone"
         android:layout_alignParentLeft="true"
         android:id="@+id/lvBtDeviceNames"/>
 
@@ -55,7 +65,7 @@
         android:layout_height="wrap_content"
         android:onClick="start"
         android:text="Start"
-        android:layout_alignParentRight="true"
+        android:layout_centerHorizontal="true"
         android:layout_alignParentBottom="true"/>
 
     <Button
@@ -63,6 +73,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="sendtoall"
+        android:visibility="gone"
         android:text="Send To All"
         android:layout_alignParentBottom="true"/>
 

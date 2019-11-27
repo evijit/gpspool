@@ -42,11 +42,19 @@ import sintulabs.p2p.Ayanda;
 import sintulabs.p2p.Bluetooth;
 import sintulabs.p2p.IBluetooth;
 
+import android.support.v4.app.FragmentActivity;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
+
 /**
  * Created by sabzo on 1/14/18.
  */
 
-public class BluetoothActivity extends AppCompatActivity {
+public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCallback{
     private Button btnAnnounce;
     private Button btnDiscover;
     private Bluetooth bt;
@@ -74,6 +82,7 @@ public class BluetoothActivity extends AppCompatActivity {
     HashSet<String> connecteddevices = new HashSet<>();
 
     private Coordinator c;
+    private GoogleMap mMap;
 
 
     BluetoothDevice getDeviceByName(String name) {
@@ -273,14 +282,14 @@ public class BluetoothActivity extends AppCompatActivity {
                                 }
                                 Location loc = manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
 
-                                Toast.makeText( getApplicationContext(),"My current location is: " + "Latitud =" +
-                                        loc.getLatitude() + "Longitud = " + loc.getLongitude(),Toast.LENGTH_SHORT).show();
+//                                Toast.makeText( getApplicationContext(),"My current location is: " + "Latitud =" +
+//                                        loc.getLatitude() + "Longitud = " + loc.getLongitude(),Toast.LENGTH_SHORT).show();
 
                                 lat = loc.getLatitude();
                                 lon = loc.getLongitude();
 
                                 for (int i = 0; i < 5; ++i) {
-                                    castMess("GPS-" + lat + "|" + lon + "-n_message:" + i + "-n_round:" + round);
+                                    castMess("GPS~" + lat + "|" + lon + "~n_message:" + i + "~n_round:" + round);
                                     Utility.sleep(5000);
 
                                 }
@@ -310,6 +319,18 @@ public class BluetoothActivity extends AppCompatActivity {
                     }
 
                 }
+                else if (mess_type.equals(("GPS"))){
+
+
+                    String[] toks = mess.split("-");
+                    String[] ll = toks[1].split("|");
+                    Double lt = Double.valueOf(ll[0]);
+                    Double ln = Double.valueOf(ll[1]);
+                    mMap.clear();
+                    LatLng mkr = new LatLng(lt, ln);
+                    mMap.addMarker(new MarkerOptions().position(mkr).title("Received Location"));
+                    mMap.moveCamera(CameraUpdateFactory.newLatLng(mkr));
+                }
                 Log.w("Debug", mess_type);
             }
 
@@ -334,6 +355,8 @@ public class BluetoothActivity extends AppCompatActivity {
         setListeners();
         //a.btAnnounce();
         a.btDiscoverandannounce();
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
     }
 
@@ -516,4 +539,13 @@ public class BluetoothActivity extends AppCompatActivity {
     }
 
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+
+        // Add a marker in Sydney, Australia, and move the camera.
+        LatLng sydney = new LatLng(-34, 151);
+        mMap.addMarker(new MarkerOptions().position(sydney).title("Starting marker"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+    }
 }

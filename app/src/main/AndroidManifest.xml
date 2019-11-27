@@ -15,6 +15,10 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyClXJNBzgVle2BvivwlVKB6_IAEBAb0jEs"/>
+
 
         <activity
             android:name="sample.LanActivity"
