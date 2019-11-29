@@ -91,6 +91,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     private Coordinator c;
     private GoogleMap mMap;
 
+    LocationTrack locationTrack;
+
     float zoom_level = 14f;
     BluetoothDevice getDeviceByName(String name) {
         for (Map.Entry mapElement : devices.entrySet()) {
@@ -123,6 +125,13 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         Float battery = Float.valueOf(getBattery_percentage());
         n_total_battery += battery;
         return Math.round(n_signal_round/n_total_battery*battery);
+    }
+
+    public boolean checkLocationPermission()
+    {
+        String permission = "android.permission.ACCESS_FINE_LOCATION";
+        int res = this.checkCallingOrSelfPermission(permission);
+        return (res == PackageManager.PERMISSION_GRANTED);
     }
 
     public void sendtoall(View view) {
@@ -288,18 +297,12 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                                         ActivityCompat.checkSelfPermission(BluetoothActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                                     return;
                                 }
-                                Location loc = manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
-
-
 
                                 //Toast.makeText( getApplicationContext(),"My current location is: " + "Latitud =" +
                                 //        loc.getLatitude() + "Longitud = " + loc.getLongitude(),Toast.LENGTH_SHORT).show();
-                                try {
-                                    lat = loc.getLatitude();
-                                    lon = loc.getLongitude();
 
-                                }catch (Exception e){
-                                }
+                                lat = locationTrack.getLatitude();
+                                lon = locationTrack.getLongitude();
 
 
                                 for (int i = 0; i < n_signal; ++i) {
@@ -385,6 +388,10 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                 Bluetooth.BT_PERMISSION_REQUEST_LOCATION);
+
+        ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+
+
         setContentView(R.layout.bluetooth_activity);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -395,7 +402,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         a.btDiscoverandannounce();
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
+        locationTrack = new LocationTrack(this);
     }
 
 
@@ -639,18 +646,16 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                             ActivityCompat.checkSelfPermission(BluetoothActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                         return;
                     }
-                    Location loc = manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+
+                    //checkLocationPermission();
+                    //Location loc = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
                     n_total += 1;
                     //Toast.makeText( getApplicationContext(),"My current location is: " + "Latitud =" +
                     //        loc.getLatitude() + "Longitud = " + loc.getLongitude(),Toast.LENGTH_SHORT).show();
-                    try {
-                        lat = loc.getLatitude();
-                        lon = loc.getLongitude();
 
-                    } catch (Exception e) {
-                    }
-
+                    lat = locationTrack.getLatitude();
+                    lon = locationTrack.getLongitude();
 
                     runOnUiThread(new Runnable() {
                         @Override
@@ -683,3 +688,6 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         }.start();
     }
 }
+
+
+
