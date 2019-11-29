@@ -301,9 +301,15 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                                 }catch (Exception e){
                                 }
 
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
+
+                                for (int i = 0; i < n_signal; ++i) {
+                                    n_total+=1;
+                                    castMess("GPS~" + lat + "=" + lon + "~n_message:" + i + "~n_round:" + round);
+                                    Utility.sleep(sleep_GPS);
+
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
                                         mMap.clear();
                                         LatLng mkr = new LatLng(lat, lon);
                                         mMap.addMarker(new MarkerOptions().position(mkr).title("Received Location"));
@@ -315,13 +321,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                                         tv_bat.setText(getBattery_percentage_MAA());
                                         tv_txcount.setText(String.valueOf(n_total));
-                                    }
-                                });
-                                for (int i = 0; i < n_signal; ++i) {
-                                    n_total+=1;
-                                    castMess("GPS~" + lat + "=" + lon + "~n_message:" + i + "~n_round:" + round);
-                                    Utility.sleep(sleep_GPS);
-
+                                        }
+                                    });
                                 }
 
 //                                if (manager != null) {
