@@ -50,6 +50,8 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.*;
+
 /**
  * Created by sabzo on 1/14/18.
  */
@@ -69,7 +71,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
     Integer clock = -1;
 
-    //String behavior = "Transfer~GPSPool_0~GPSPool_1~GPSPool_3";
+    String behavior = "Transfer~GPSPool_0~GPSPool_1~GPSPool_4";
 
     boolean is_leader = false;
     boolean is_timeout = false;
@@ -165,10 +167,14 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     }
 
     public String create_transfer_mess() {
+
+
         List<String> ret = parse_transfer_mess();
         String mess = "Transfer";
         if(ret.size() == 1){
-            for (Map.Entry<String, Float> entry : this.battery_level.entrySet()) {
+
+            TreeMap<String, Float> sorted = new TreeMap<>(this.battery_level);
+            for (Map.Entry<String, Float> entry : sorted.entrySet()) {
                 mess += "~"+entry.getKey();
             }
         }else{
@@ -176,6 +182,9 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                 mess += "~"+ret.get(i);
             }
         }
+
+
+
         return mess;
     }
 
@@ -301,9 +310,10 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                                 //Toast.makeText( getApplicationContext(),"My current location is: " + "Latitud =" +
                                 //        loc.getLatitude() + "Longitud = " + loc.getLongitude(),Toast.LENGTH_SHORT).show();
 
-                                lat = locationTrack.getLatitude();
-                                lon = locationTrack.getLongitude();
-
+                                if(locationTrack.getLatitude()>0.0) {
+                                    lat = locationTrack.getLatitude();
+                                    lon = locationTrack.getLongitude();
+                                }
 
                                 for (int i = 0; i < n_signal; ++i) {
                                     n_total+=1;
@@ -358,10 +368,10 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                     String[] toks = mess.split("~");
                     String[] ll = toks[1].split("=");
-                    Double lt = Double.valueOf(ll[0]);
-                    Double ln = Double.valueOf(ll[1]);
+                    lat = Double.valueOf(ll[0]);
+                    lon = Double.valueOf(ll[1]);
                     mMap.clear();
-                    LatLng mkr = new LatLng(lt, ln);
+                    LatLng mkr = new LatLng(lat, lon);
                     mMap.addMarker(new MarkerOptions().position(mkr).title("Received Location"));
                     mMap.moveCamera(CameraUpdateFactory.newLatLng(mkr));
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mkr,zoom_level));
