@@ -76,8 +76,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     boolean is_leader = false;
     boolean is_timeout = false;
 
-    Integer sleep_transfer = 15000;
-    Integer sleep_GPS = 8000;
+    Integer sleep_transfer = 30000;
+    Integer sleep_GPS = 10000;
 
     Integer n_total = 0;
 
@@ -231,6 +231,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                 String om = tv_log.getText().toString();;
                 om = om + '\n'+ mess;
+                om = om +"\n batt:"+getBattery_percentage_MAA()+" n_mess: "+String.valueOf(n_total);
                 tv_log.setText(om);
 
 
@@ -240,7 +241,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                 String[] tokens = mess.split("~");
                 String mess_type = tokens[0];
 
-                /*
+
                 if(is_timeout==false){
                     Toast.makeText(BluetoothActivity.this, "Initialize time out!", Toast.LENGTH_LONG)
                             .show();
@@ -263,8 +264,6 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                     is_timeout = true;
                 }
 
-                
-                 */
                 clock += 1;
 
                 if(mess_type.equals("Leader")){
@@ -684,6 +683,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                             String om = tv_log.getText().toString();;
                             om = om + "\n GPS" ;
+                            om = om +"\n batt:"+getBattery_percentage_MAA()+" n_mess: "+String.valueOf(n_total);
                             tv_log.setText(om);
 
                             mMap.clear();
