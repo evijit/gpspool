@@ -76,8 +76,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     boolean is_leader = false;
     boolean is_timeout = false;
 
-    Integer sleep_transfer = 30000;
-    Integer sleep_GPS = 10000;
+    Integer sleep_transfer = 15000;
+    Integer sleep_GPS = 8000;
 
     Integer n_total = 0;
 
@@ -85,8 +85,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     Float n_signal_round = 5f;
     Ayanda a;
 
-    double lat = 0;
-    double lon = 0;
+    double lat = 42.3383691;
+    double lon = -71.0922885;
 
     HashSet<String> connecteddevices = new HashSet<>();
 
@@ -598,6 +598,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                 BluetoothDevice device = (BluetoothDevice) mapElement.getValue();
                 a.btConnect(device); // maybe a class for a device that's connected
+                Utility.sleep(5000);
             }
         }
         //castMess("Leader~"+getLocalBluetoothName());
