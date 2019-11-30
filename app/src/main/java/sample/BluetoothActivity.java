@@ -80,7 +80,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     Integer n_total = 0;
 
     Float round = 0f;
-    Float n_signal_round = 10f;
+    Float n_signal_round = 5f;
     Ayanda a;
 
     double lat = 0;
@@ -389,8 +389,9 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
                 Bluetooth.BT_PERMISSION_REQUEST_LOCATION);
 
-        ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, Bluetooth.BT_PERMISSION_REQUEST_LOCATION);
 
+        boolean GPSpermision = checkLocationPermission();
 
         setContentView(R.layout.bluetooth_activity);
         Toolbar toolbar = findViewById(R.id.toolbar);
