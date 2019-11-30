@@ -77,12 +77,12 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     boolean is_timeout = false;
 
     Integer sleep_transfer = 30000;
-    Integer sleep_GPS = 10000;
+    Integer sleep_GPS = 1000;
 
     Integer n_total = 0;
 
     Float round = 0f;
-    Float n_signal_round = 5f;
+    Float n_signal_round = 500000f;
     Ayanda a;
 
     double lat = 42.3383691;
@@ -229,7 +229,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                 TextView tv_log = (TextView) findViewById(R.id.logt);
                 tv_log.setMovementMethod(new ScrollingMovementMethod());
 
-                String om = tv_log.getText().toString();;
+                String om = tv_log.getText().toString();
                 om = om + '\n'+ mess;
                 om = om +"\n batt:"+getBattery_percentage_MAA()+" n_mess: "+String.valueOf(n_total);
                 tv_log.setText(om);
@@ -241,7 +241,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                 String[] tokens = mess.split("~");
                 String mess_type = tokens[0];
 
-
+                /*
                 if(is_timeout==false){
                     Toast.makeText(BluetoothActivity.this, "Initialize time out!", Toast.LENGTH_LONG)
                             .show();
@@ -266,6 +266,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                 clock += 1;
 
+
+                 */
                 if(mess_type.equals("Leader")){
                     round += 1;
                     a.btDiscoverandannounce();
@@ -316,7 +318,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                                 for (int i = 0; i < n_signal; ++i) {
                                     n_total+=1;
-                                    castMess("GPS~" + lat + "=" + lon + "~n_message:" + i + "~n_round:" + round);
+                                    castMess("GPS~" + lat + "=" + lon + "~n_message:" + i + "~n_round:" + round+"~LeaderBatt:"+getBattery_percentage_MAA());
                                     Utility.sleep(sleep_GPS);
 
                                     runOnUiThread(new Runnable() {
@@ -333,6 +335,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                                         tv_bat.setText(getBattery_percentage_MAA());
                                         tv_txcount.setText(String.valueOf(n_total));
+
                                         }
                                     });
                                 }
