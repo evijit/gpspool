@@ -76,8 +76,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     boolean is_leader = false;
     boolean is_timeout = false;
 
-    Integer sleep_transfer = 15000;
-    Integer sleep_GPS = 8000;
+    Integer sleep_transfer = 30000;
+    Integer sleep_GPS = 10000;
 
     Integer n_total = 0;
 
