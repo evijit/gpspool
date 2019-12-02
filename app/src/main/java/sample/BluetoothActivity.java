@@ -74,7 +74,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     boolean is_leader = false;
     boolean is_timeout = false;
 
-    Integer sleep_transfer = 15000;
+    Integer sleep_transfer = 30000;
     Integer sleep_GPS = 10000;
 
     Integer n_total = 0;
@@ -239,7 +239,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                 String[] tokens = mess.split("~");
                 String mess_type = tokens[0];
 
-
+                /*
                 if(is_timeout==false){
                     Toast.makeText(BluetoothActivity.this, "Initialize time out!", Toast.LENGTH_LONG)
                             .show();
@@ -257,6 +257,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                     }.start();
                     is_timeout = true;
                 }
+
+                 */
 
 
                 if(mess_type.equals("Leader")){
@@ -380,7 +382,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
             @Override
             public void connected(BluetoothDevice device) {
-                String message = "Leader~" + getLocalBluetoothName();//"Hello";//
+                String message = "Hello";//"~" + getLocalBluetoothName();//
                 try {
                     a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
                 } catch (IOException e) {
@@ -594,7 +596,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                 Utility.sleep(5000);
             }
         }
-        //castMess("Leader~"+getLocalBluetoothName());
+        castMess("Leader~"+getLocalBluetoothName());
     }
 
     public void start(View view) {
