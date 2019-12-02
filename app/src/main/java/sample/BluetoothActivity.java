@@ -69,20 +69,18 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
     String transfer_mess = "";
 
-    Integer clock = -1;
-
     String behavior = "Transfer~GPSPool_0~GPSPool_1~GPSPool_4";
 
     boolean is_leader = false;
     boolean is_timeout = false;
 
-    Integer sleep_transfer = 30000;
-    Integer sleep_GPS = 1000;
+    Integer sleep_transfer = 15000;
+    Integer sleep_GPS = 10000;
 
     Integer n_total = 0;
 
     Float round = 0f;
-    Float n_signal_round = 500000f;
+    Float n_signal_round = 5f;
     Ayanda a;
 
     double lat = 42.3383691;
@@ -241,21 +239,17 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                 String[] tokens = mess.split("~");
                 String mess_type = tokens[0];
 
-                /*
+
                 if(is_timeout==false){
                     Toast.makeText(BluetoothActivity.this, "Initialize time out!", Toast.LENGTH_LONG)
                             .show();
                     new Thread() {          //this would make sure it will not block the dataRead thread
                         public void run() {
                             while(true) {
-                                Integer old_clock = BluetoothActivity.this.clock;
+                                Integer old_total = BluetoothActivity.this.n_total;
                                 Utility.sleep(sleep_transfer*2);
-                                if ((BluetoothActivity.this.clock <= old_clock) & (old_clock > 0)) {
-
-                                    BluetoothActivity.this.transfer_mess = BluetoothActivity.this.create_transfer_mess();
-
-                                    castMess(BluetoothActivity.this.transfer_mess);
-
+                                if ((BluetoothActivity.this.n_total <= old_total) & (BluetoothActivity.this.n_total > 0)) {
+                                    castMess(BluetoothActivity.this.behavior);
                                 }
                                 Log.w("Debug", "progress");
                             }
@@ -264,10 +258,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                     is_timeout = true;
                 }
 
-                clock += 1;
 
-
-                 */
                 if(mess_type.equals("Leader")){
                     round += 1;
                     a.btDiscoverandannounce();
