@@ -74,19 +74,19 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     boolean is_leader = false;
     boolean is_timeout = false;
 
-    Integer sleep_transfer = 30000;
-    Integer sleep_GPS = 10000;
+    Integer sleep_transfer = 30000;         //wait time after leader translation
+    Integer sleep_GPS = 10000;              //wait time after each GPS signal
 
-    Integer n_total = 0;
+    Integer n_total = 0;                    //counter for number of message
 
-    Float round = 0f;
-    Float n_signal_round = 5f;
+    Float round = 0f;                       //counter for the number of devices rotation
+    Float n_signal_round = 5f;              //number of signal per cycle before re-scheduling of the number of messages to send
     Ayanda a;
 
-    double lat = 42.3383691;
+    double lat = 42.3383691;                //default Longitude, latitude
     double lon = -71.0922885;
 
-    HashSet<String> connecteddevices = new HashSet<>();
+    HashSet<String> connecteddevices = new HashSet<>();         //list of connected devices
 
     private Coordinator c;
     private GoogleMap mMap;
@@ -94,6 +94,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
     LocationTrack locationTrack;
 
     float zoom_level = 14f;
+    //get device connection object by the device name
     BluetoothDevice getDeviceByName(String name) {
         for (Map.Entry mapElement : devices.entrySet()) {
             String key = (String) mapElement.getKey();
@@ -104,6 +105,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         return null;
     }
 
+    //parse the transfer message to determine which device will become leader
     public List<String> parse_transfer_mess() {
         String[] tokens = this.transfer_mess.split("~");
         List<String> ret = new LinkedList<>();
@@ -117,6 +119,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         return ret;
     }
 
+    //compute the number of message the device have to send
     public Integer compute_n_signal(){
         Float n_total_battery = 0.0f;
         for (Map.Entry<String, Float> entry : this.battery_level.entrySet()) {
@@ -127,6 +130,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         return Math.round(n_signal_round/n_total_battery*battery);
     }
 
+    //check whether user has given GPS permission
     public boolean checkLocationPermission()
     {
         String permission = "android.permission.ACCESS_FINE_LOCATION";
@@ -134,6 +138,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         return (res == PackageManager.PERMISSION_GRANTED);
     }
 
+
+    /*
     public void sendtoall(View view) {
 
         for (Map.Entry mapElement : devices.entrySet()) {
@@ -156,7 +162,9 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         }
 
     }
+    */
 
+    //update UI
     public void updateUI() {
         this.peersAdapter.clear();
         Set<String> tt = a.btGetDeviceNamesDiscovered();
@@ -164,6 +172,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         this.peersAdapter.addAll(tt);
     }
 
+    //create the transfer message which puts the lowest ID device that acks back to be the next leader
     public String create_transfer_mess() {
 
 
@@ -181,12 +190,11 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
             }
         }
 
-
-
         return mess;
     }
 
     @Override
+    //constructor when the app is initialized
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         a = new Ayanda(this, new IBluetooth() {
@@ -217,6 +225,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
             }
 
             @Override
+            //parsing incoming messages
             public void dataRead(byte[] bytes, int length) {
                 // This is the listening method
                 String mess = new String(bytes, 0, length);
@@ -229,17 +238,13 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                 String om = tv_log.getText().toString();
                 om = om + '\n'+ mess;
-                om = om +"\n batt:"+getBattery_percentage_MAA()+" n_mess: "+String.valueOf(n_total);
+                om = om +"\n batt:"+getBattery_percentage_MAH()+" n_mess: "+String.valueOf(n_total);
                 tv_log.setText(om);
-
-
-                //String dname = readMessage.substring(readMessage.length() - 9);
-                //connecteddevices.add(dname);
 
                 String[] tokens = mess.split("~");
                 String mess_type = tokens[0];
 
-                /*
+                //Timeout for new leader election so that when a device crashes or stops sending message for a long time, other devices will take turn and become the new leader
                 if(is_timeout==false){
                     Toast.makeText(BluetoothActivity.this, "Initialize time out!", Toast.LENGTH_LONG)
                             .show();
@@ -258,9 +263,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                     is_timeout = true;
                 }
 
-                 */
 
-
+                //receving leader message
                 if(mess_type.equals("Leader")){
                     round += 1;
                     a.btDiscoverandannounce();
@@ -271,6 +275,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                     String ack_mess = "Ack~" + getLocalBluetoothName() + "~" + getBattery_percentage();
 
                     try {
+                        //Ack back to the sender
                         a.btSendData(device, ack_mess.getBytes());
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -278,12 +283,13 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                     Toast.makeText(BluetoothActivity.this, "New leader :" + leader, Toast.LENGTH_LONG)
                             .show();
-                } else if (mess_type.equals("Ack")) {
+                } else if (mess_type.equals("Ack")) { // receive ack message
                     String device_id = tokens[1];
                     Float battery = Float.valueOf(tokens[2]);
-                    battery_level.put(device_id, battery);
+                    battery_level.put(device_id, battery);  //collect battery level
                     if (is_leader == false) {
                         is_leader = true;
+                        //start sending GPS message
                         new Thread() {          //this would make sure it will not block the dataRead thread
                             public void run() {
                                 Utility.sleep(sleep_transfer);
@@ -311,7 +317,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                                 for (int i = 0; i < n_signal; ++i) {
                                     n_total+=1;
-                                    castMess("GPS~" + lat + "=" + lon + "~n_message:" + i + "~n_round:" + round+"~LeaderBatt:"+getBattery_percentage_MAA());
+                                    //multi-cast messages to all devices
+                                    castMess("GPS~" + lat + "=" + lon + "~n_message:" + i + "~n_round:" + round+"~LeaderBatt:"+getBattery_percentage_MAH());
                                     Utility.sleep(sleep_GPS);
 
                                     runOnUiThread(new Runnable() {
@@ -326,7 +333,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                                         TextView tv_bat = (TextView) findViewById(R.id.txbat);
                                         TextView tv_txcount = (TextView) findViewById(R.id.txcount);
 
-                                        tv_bat.setText(getBattery_percentage_MAA());
+                                        tv_bat.setText(getBattery_percentage_MAH());
                                         tv_txcount.setText(String.valueOf(n_total));
 
                                         }
@@ -346,25 +353,26 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                             }
                         }.start();
                     }
-                } else if (mess_type.equals("Transfer")) {
+                } else if (mess_type.equals("Transfer")) {  //receive transfer message
                     a.btDiscoverandannounce();
 
                     BluetoothActivity.this.transfer_mess = mess;
                     Utility.sleep(1000);
                     is_leader = false;
                     List<String> ret = parse_transfer_mess();
-                    if (ret.get(0).equals(getLocalBluetoothName())) {
+                    if (ret.get(0).equals(getLocalBluetoothName())) {   //if the current device is on top of the transfer message, become the leader
                         selfElect();
                     }
 
                 }
-                else if (mess_type.equals(("GPS"))){
+                else if (mess_type.equals(("GPS"))){    //get GPS messgae
                     n_total+=1;
 
                     String[] toks = mess.split("~");
                     String[] ll = toks[1].split("=");
                     lat = Double.valueOf(ll[0]);
                     lon = Double.valueOf(ll[1]);
+                    //update map
                     mMap.clear();
                     LatLng mkr = new LatLng(lat, lon);
                     mMap.addMarker(new MarkerOptions().position(mkr).title("Received Location"));
@@ -374,14 +382,14 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                     TextView tv_bat = (TextView) findViewById(R.id.txbat);
                     TextView tv_txcount = (TextView) findViewById(R.id.txcount);
 
-                    tv_bat.setText(getBattery_percentage_MAA());
+                    tv_bat.setText(getBattery_percentage_MAH());
                     tv_txcount.setText(String.valueOf(n_total));
                 }
                 Log.w("Debug", mess_type);
             }
 
             @Override
-            public void connected(BluetoothDevice device) {
+            public void connected(BluetoothDevice device) {     //establish connection between devices
                 String message = "Hello";//"~" + getLocalBluetoothName();//
                 try {
                     a.btSendData(device, message.getBytes()); // maybe a class for a device that's connected
@@ -411,7 +419,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         locationTrack = new LocationTrack(this);
     }
 
-
+    //get current device battery level
     String getBattery_percentage()
     {
         IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
@@ -424,7 +432,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         return String.valueOf(Math.round(p));
     }
 
-    String getBattery_percentage_MAA()
+    //get current device battery level in MAH
+    String getBattery_percentage_MAH()
     {
         Object mPowerProfile_ = null;
         double batteryCapacity = 0.0;
@@ -469,6 +478,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         }
     }
 
+    //get current device bluetooth name
     public String getLocalBluetoothName(){
         BluetoothAdapter mBluetoothAdapter = null;
         if(mBluetoothAdapter == null){
@@ -560,6 +570,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         a.btUnregisterReceivers();
     }
 
+    //multi-cast a message to all devices
     public void castMess(String mess) {
 
         for (Map.Entry mapElement : devices.entrySet()) {
@@ -582,11 +593,9 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
     }
 
+    //establish connection with everyone and become the leader
     public void selfElect() {
         a.btDiscoverandannounce();
-
-
-
         for (Map.Entry mapElement : devices.entrySet()) {
             String key = (String) mapElement.getKey();
             if (key.contains("GPS")) {
@@ -599,22 +608,8 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         castMess("Leader~"+getLocalBluetoothName());
     }
 
+    //start GPSPool
     public void start(View view) {
-        /*
-        a.btDiscoverandannounce();
-
-        for (Map.Entry mapElement : devices.entrySet()) {
-            String key = (String) mapElement.getKey();
-            if (key.contains("GPS")) {
-
-                BluetoothDevice device = (BluetoothDevice) mapElement.getValue();
-                a.btConnect(device); // maybe a class for a device that's connected
-            }
-        }
-         */
-        //a.btDiscoverandannounce();
-        //c = new Coordinator(this.devices,"Transfer~Done",a);
-        //c.start();
 
         TextView tv_log = (TextView) findViewById(R.id.logt);
         tv_log.setMovementMethod(new ScrollingMovementMethod());
@@ -637,7 +632,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
 
-
+    //Experiment: no sharing GPS
     public void constgps(View view) {
         TextView tv_log = (TextView) findViewById(R.id.logt);
         tv_log.setMovementMethod(new ScrollingMovementMethod());
@@ -671,7 +666,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
                             TextView tv_bat = (TextView) findViewById(R.id.txbat);
                             TextView tv_txcount = (TextView) findViewById(R.id.txcount);
 
-                            tv_bat.setText(getBattery_percentage_MAA());
+                            tv_bat.setText(getBattery_percentage_MAH());
                             tv_txcount.setText(String.valueOf(n_total));
 
                             TextView tv_log = (TextView) findViewById(R.id.logt);
@@ -679,7 +674,7 @@ public class BluetoothActivity extends AppCompatActivity implements OnMapReadyCa
 
                             String om = tv_log.getText().toString();;
                             om = om + "\n GPS" ;
-                            om = om +"\n batt:"+getBattery_percentage_MAA()+" n_mess: "+String.valueOf(n_total);
+                            om = om +"\n batt:"+getBattery_percentage_MAH()+" n_mess: "+String.valueOf(n_total);
                             tv_log.setText(om);
 
                             mMap.clear();
