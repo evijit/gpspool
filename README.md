@@ -10,10 +10,10 @@ The GPS, or Global Positioning System, is an old but reliable system that is use
 
 
 ## Proposal Framework
-We propose a framework that only requires a single device from a set of devices to query GPS signals and multi-casts to others via low-energy Bluetooth channels. We define the notation of fairness as the number of messages each device needs to send which is proportional to the device battery level. Thus low battery devices can prolong their operational time while still contribute GPS signals for the group of devices. When a device finishes sending GPS signals, it will transfer the control to the next device. 
+We propose a framework that only requires a single device from a set of devices to query GPS signals and multi-casts it to others via low-energy Bluetooth channels. We make the work-distribution fair by dividing work on the basis of each device's battery level. Thus low battery devices can prolong their operational time while still contributing GPS signals to the group of devices. When a device finishes sending GPS signals, it will transfer the control to the next device. 
 
 ## Contribution
-+ We propose the notation of fairness as the workload of each device is proportional to its battery level to prolong operation time of all devices
++ We propose the concept of fairness. The workload of each device is proportional to its battery level to prolong the collective operational time.
 + We propose a protocol for synchronous communication for co-ordination between devices
     + We introduce 4 types of messages (Leader, Ack, GPS, Transfer) that convey different information among devices
     + We develop a scheduling algorithm that collects all devices' battery levels and self-computes the number of GPS messages thus the algorithm constantly adapts to the battery level of each device
