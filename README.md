@@ -19,6 +19,13 @@ We propose a framework that only requires a single device from a set of devices 
     + We develop a scheduling algorithm that collects all devices' battery levels and self-computes the number of GPS messages thus the algorithm constantly adapts to the battery level of each device
     + We use Bluetooth protocol for inter-device communication to conserve battery
 
+
+## Path to main file
+
+The path to the file having code for leader election and work distribution is:
+```
+gpspool/app/src/main/java/sample/BluetoothActivity.java
+```
 ## Library:
 To send Bluetooth signals between devices, we use the Ayanda( https://github.com/sabzo/ayanda ) which is an open-source Android library that offers API for Bluetooth communication among devices.
 
